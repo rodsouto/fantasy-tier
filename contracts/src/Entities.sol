@@ -7,127 +7,51 @@ import "solmate/src/auth/Owned.sol";
 /// @notice Manages player and team entities for the fantasy football game
 /// @dev Handles the creation, updating, and retrieval of player and team data
 contract Entities is Owned {
-    /// @notice Struct to represent a player
-    struct Player {
-        uint256 id;
-        string name;
-        string position;
-        uint256 price;
-        uint256 teamId;
+    enum Position {
+        GOALKEEPER,
+        DEFENDER,
+        MIDFIELDER,
+        FORWARD
     }
 
-    /// @notice Struct to represent a team
-    struct Team {
-        uint256 id;
-        string name;
+    /// @notice Struct to represent a player
+    struct Player {
+        Position position;
+        uint8 teamId; // index of team ordering all the teams alphabetically
+        uint240 price;
     }
 
     /// @notice Mapping of player IDs to Player structs
-    mapping(uint256 => Player) public players;
-
-    /// @notice Array of all teams
-    Team[] public teams;
-
-    /// @notice Counter for player IDs
-    uint256 private playerIdCounter;
-
-    /// @notice Emitted when a new player is added
-    event PlayerAdded(
-        uint256 indexed playerId,
-        string name,
-        string position,
-        uint256 price,
-        uint256 teamId
-    );
+    mapping(bytes32 => Player) public players;
 
     /// @notice Emitted when a player is updated
     event PlayerUpdated(
-        uint256 indexed playerId,
-        string name,
-        string position,
-        uint256 price,
-        uint256 teamId
+        bytes32 indexed playerId,
+        Position indexed position,
+        uint8 indexed teamId,
+        uint240 price
     );
 
-    /// @notice Emitted when a new team is added
-    event TeamAdded(uint256 indexed teamId, string name);
-
-    /// @notice Initializes the Entities contract
-    constructor() Owned(msg.sender) {}
-
     /// @notice Adds a new player to the game
-    /// @param name The player's name
-    /// @param position The player's position
-    /// @param price The player's price
-    /// @param teamId The ID of the team the player belongs to
+    /// @param playerIds The player's name
+    /// @param positions The player's position
+    /// @param teamIds The ID of the team the player belongs to
+    /// @param prices The player's price
     /// @dev Can only be called by the contract owner
-    function addPlayer(
-        string memory name,
-        string memory position,
-        uint256 price,
-        uint256 teamId
+    function addPlayers(
+        bytes32[] calldata playerIds,
+        Position[] calldata positions,
+        uint8[] calldata teamIds,
+        uint240[] calldata prices
     ) external onlyOwner {
-        playerIdCounter++;
-        players[playerIdCounter] = Player({
-            id: playerIdCounter,
-            name: name,
-            position: position,
-            price: price,
-            teamId: teamId
-        });
+        for (uint256 i; i < playerIds.length; i++) {
+            players[playerIds[i]] = Player({
+                position: positions[i],
+                teamId: teamIds[i],
+                price: prices[i]
+            });
 
-        emit PlayerAdded(playerIdCounter, name, position, price, teamId);
-    }
-
-    /// @notice Updates an existing player's information
-    /// @param playerId The ID of the player to update
-    /// @param name The player's new name
-    /// @param position The player's new position
-    /// @param price The player's new price
-    /// @param teamId The ID of the team the player now belongs to
-    /// @dev Can only be called by the contract owner
-    function updatePlayer(
-        uint256 playerId,
-        string memory name,
-        string memory position,
-        uint256 price,
-        uint256 teamId
-    ) external onlyOwner {
-        require(players[playerId].id != 0, "Player does not exist");
-
-        Player storage _player = players[playerId];
-        _player.name = name;
-        _player.position = position;
-        _player.price = price;
-        _player.teamId = teamId;
-
-        emit PlayerUpdated(playerId, name, position, price, teamId);
-    }
-
-    /// @notice Adds a new team to the game
-    /// @param name The name of the new team
-    /// @dev Can only be called by the contract owner
-    function addTeam(string memory name) external onlyOwner {
-        teams.push(Team({id: teams.length + 1, name: name}));
-        emit TeamAdded(teams.length, name);
-    }
-
-    /// @notice Retrieves a player's information
-    /// @param playerId The ID of the player
-    /// @return The Player struct for the given player ID
-    function player(uint256 playerId) public view returns (Player memory) {
-        return players[playerId];
-    }
-
-    /// @notice Gets the total number of players
-    /// @return The total number of players
-    function getPlayerCount() external view returns (uint256) {
-        return playerIdCounter;
-    }
-
-    /// @notice Gets the total number of teams
-    /// @return The total number of teams
-    function getTeamCount() external view returns (uint256) {
-        return teams.length;
+            emit PlayerUpdated(playerIds[i], positions[i], teamIds[i], prices[i]);
+        }
     }
 }
