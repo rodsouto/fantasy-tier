@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "forge-std/Test.sol";
 import "../src/Squads.sol";
@@ -120,20 +120,8 @@ contract SquadsTest is Test {
         assertEq(starterCount, 11, "Incorrect number of starters");
 
         // Check if the correct players are set as starters
-        bool[12] memory playerStarterStatus = [
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false,
-            false
-        ];
+        bool[12] memory playerStarterStatus =
+            [false, false, false, false, false, false, false, false, false, false, false, false];
         for (uint256 i = 0; i < squad.players.length; i++) {
             if (squad.players[i].isStarter) {
                 playerStarterStatus[squad.players[i].id] = true;
@@ -152,28 +140,14 @@ contract SquadsTest is Test {
 
         for (uint256 i = 0; i < squad.players.length; i++) {
             if (squad.players[i].isStarter) {
-                Entities.Player memory player = entities.player(
-                    squad.players[i].id
-                );
-                if (
-                    keccak256(abi.encodePacked(player.position)) ==
-                    keccak256(abi.encodePacked("Goalkeeper"))
-                ) {
+                Entities.Player memory player = entities.player(squad.players[i].id);
+                if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Goalkeeper"))) {
                     goalkeeperCount++;
-                } else if (
-                    keccak256(abi.encodePacked(player.position)) ==
-                    keccak256(abi.encodePacked("Defender"))
-                ) {
+                } else if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Defender"))) {
                     defenderCount++;
-                } else if (
-                    keccak256(abi.encodePacked(player.position)) ==
-                    keccak256(abi.encodePacked("Midfielder"))
-                ) {
+                } else if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Midfielder"))) {
                     midfielderCount++;
-                } else if (
-                    keccak256(abi.encodePacked(player.position)) ==
-                    keccak256(abi.encodePacked("Forward"))
-                ) {
+                } else if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Forward"))) {
                     forwardCount++;
                 }
             }
@@ -327,11 +301,7 @@ contract SquadsTest is Test {
         proofs[1][0] = keccak256("mock proof for user2");
 
         // Mock the Merkle verification
-        vm.mockCall(
-            address(merkle),
-            abi.encodeWithSelector(merkle.verifySquadScore.selector),
-            abi.encode(true)
-        );
+        vm.mockCall(address(merkle), abi.encodeWithSelector(merkle.verifySquadScore.selector), abi.encode(true));
 
         squads.updateGameWeekScores(gameWeek, squadScores, proofs);
 
@@ -356,16 +326,10 @@ contract SquadsTest is Test {
 
         // Mock the Merkle root
         vm.mockCall(
-            address(merkle),
-            abi.encodeWithSelector(merkle.getGameWeekMerkleRoot.selector),
-            abi.encode(merkleRoot)
+            address(merkle), abi.encodeWithSelector(merkle.getGameWeekMerkleRoot.selector), abi.encode(merkleRoot)
         );
         // Mock the verification to return false
-        vm.mockCall(
-            address(merkle),
-            abi.encodeWithSelector(merkle.verifySquadScore.selector),
-            abi.encode(false)
-        );
+        vm.mockCall(address(merkle), abi.encodeWithSelector(merkle.verifySquadScore.selector), abi.encode(false));
 
         vm.expectRevert("Invalid Merkle proof");
         squads.updateGameWeekScores(gameWeek, squadScores, proofs);

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 interface IRealityETH {
     function askQuestionWithMinBond(
@@ -12,7 +12,5 @@ interface IRealityETH {
         uint256 min_bond
     ) external payable returns (bytes32);
 
-    function resultForOnceSettled(
-        bytes32 question_id
-    ) external view returns (bytes32);
+    function resultForOnceSettled(bytes32 question_id) external view returns (bytes32);
 }

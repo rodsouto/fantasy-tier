@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "solmate/src/auth/Owned.sol";
 import "./Entities.sol";
@@ -38,12 +38,7 @@ contract FantasyFootball is Owned {
     /// @param _entities Address of the Entities contract
     /// @param _squads Address of the Squads contract
     /// @param _merkle Address of the Merkle contract
-    constructor(
-        string memory _league,
-        Entities _entities,
-        Squads _squads,
-        Merkle _merkle
-    ) Owned(msg.sender) {
+    constructor(string memory _league, Entities _entities, Squads _squads, Merkle _merkle) Owned(msg.sender) {
         league = _league;
         entities = _entities;
         squads = _squads;
