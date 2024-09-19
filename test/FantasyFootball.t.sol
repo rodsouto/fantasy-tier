@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "forge-std/Test.sol";
 import "../src/FantasyFootball.sol";
@@ -35,12 +35,7 @@ contract FantasyFootballTest is Test {
         squads = new Squads(entities, merkle);
 
         vm.prank(owner);
-        fantasyFootball = new FantasyFootball(
-            "Test League",
-            entities,
-            squads,
-            merkle
-        );
+        fantasyFootball = new FantasyFootball("Test League", entities, squads, merkle);
 
         // Transfer ownership of Merkle contract to FantasyFootball
         merkle.transferOwnership(address(fantasyFootball));
@@ -150,22 +145,16 @@ contract FantasyFootballTest is Test {
 
 // Mock RealityETH contract
 contract MockRealityETH is IRealityETH {
-    function askQuestionWithMinBond(
-        uint256,
-        string memory,
-        address,
-        uint32,
-        uint32,
-        uint256,
-        uint256
-    ) external payable returns (bytes32) {
+    function askQuestionWithMinBond(uint256, string memory, address, uint32, uint32, uint256, uint256)
+        external
+        payable
+        returns (bytes32)
+    {
         // Return a dummy question ID
         return bytes32(uint256(1));
     }
 
     // Implement other functions from IRealityETH interface as needed
     // For now, we'll leave them empty as they're not used in our tests
-    function resultForOnceSettled(
-        bytes32 question_id
-    ) external view override returns (bytes32) {}
+    function resultForOnceSettled(bytes32 question_id) external view override returns (bytes32) {}
 }

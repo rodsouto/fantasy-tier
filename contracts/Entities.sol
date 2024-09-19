@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "solmate/src/auth/Owned.sol";
 
@@ -25,12 +25,7 @@ contract Entities is Owned {
     mapping(bytes32 => Player) public players;
 
     /// @notice Emitted when a player is updated
-    event PlayerUpdated(
-        bytes32 indexed playerId,
-        Position indexed position,
-        uint8 indexed teamId,
-        uint240 price
-    );
+    event PlayerUpdated(bytes32 indexed playerId, Position indexed position, uint8 indexed teamId, uint240 price);
 
     /// @notice Adds a new player to the game
     /// @param playerIds The player's name
@@ -45,11 +40,7 @@ contract Entities is Owned {
         uint240[] calldata prices
     ) external onlyOwner {
         for (uint256 i; i < playerIds.length; i++) {
-            players[playerIds[i]] = Player({
-                position: positions[i],
-                teamId: teamIds[i],
-                price: prices[i]
-            });
+            players[playerIds[i]] = Player({position: positions[i], teamId: teamIds[i], price: prices[i]});
 
             emit PlayerUpdated(playerIds[i], positions[i], teamIds[i], prices[i]);
         }

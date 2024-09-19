@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "solmate/src/auth/Owned.sol";
 import "./interfaces/IRealityETH.sol";
@@ -40,12 +40,9 @@ contract Merkle is Owned {
     /// @param _arbitrator Address of the arbitrator for Reality.eth questions
     /// @param _questionTimeout Timeout period for Reality.eth questions
     /// @param _minBond Minimum bond required for Reality.eth questions
-    constructor(
-        IRealityETH _realityETH,
-        address _arbitrator,
-        uint32 _questionTimeout,
-        uint256 _minBond
-    ) Owned(msg.sender) {
+    constructor(IRealityETH _realityETH, address _arbitrator, uint32 _questionTimeout, uint256 _minBond)
+        Owned(msg.sender)
+    {
         realityETH = _realityETH;
         arbitrator = _arbitrator;
         questionTimeout = _questionTimeout;
@@ -55,10 +52,7 @@ contract Merkle is Owned {
     /// @notice Asks a question to Reality.eth for the current game week's Merkle root
     /// @param league The league name
     /// @param gameWeek The game week number
-    function createGameWeekQuestion(
-        string calldata league,
-        uint256 gameWeek
-    ) external onlyOwner {
+    function createGameWeekQuestion(string calldata league, uint256 gameWeek) external onlyOwner {
         string memory question = string(
             abi.encodePacked(
                 "What is the merkle root of a merkle tree containing the squad scores for ",
@@ -69,15 +63,7 @@ contract Merkle is Owned {
             )
         );
 
-        bytes32 questionId = realityETH.askQuestionWithMinBond(
-            2,
-            question,
-            arbitrator,
-            questionTimeout,
-            0,
-            0,
-            minBond
-        );
+        bytes32 questionId = realityETH.askQuestionWithMinBond(2, question, arbitrator, questionTimeout, 0, 0, minBond);
         gameWeekQuestions[gameWeek] = questionId;
         emit QuestionAsked(gameWeek, questionId);
     }
@@ -85,9 +71,7 @@ contract Merkle is Owned {
     /// @notice Retrieves the Merkle root for a specific game week
     /// @param gameWeek The game week number
     /// @return merkleRoot The Merkle root for the game week
-    function getGameWeekMerkleRoot(
-        uint256 gameWeek
-    ) public view returns (bytes32 merkleRoot) {
+    function getGameWeekMerkleRoot(uint256 gameWeek) public view returns (bytes32 merkleRoot) {
         bytes32 questionId = gameWeekQuestions[gameWeek];
         merkleRoot = realityETH.resultForOnceSettled(questionId);
         return merkleRoot;
@@ -98,29 +82,23 @@ contract Merkle is Owned {
     /// @param squadScore The SquadScore struct containing the owner's address and points
     /// @param proof The Merkle proof
     /// @return True if the proof is valid, false otherwise
-    function verifySquadScore(
-        uint256 gameWeek,
-        SquadScore memory squadScore,
-        bytes32[] memory proof
-    ) public view returns (bool) {
+    function verifySquadScore(uint256 gameWeek, SquadScore memory squadScore, bytes32[] memory proof)
+        public
+        view
+        returns (bool)
+    {
         bytes32 merkleRoot = getGameWeekMerkleRoot(gameWeek);
 
-        bytes32 leaf = keccak256(
-            abi.encodePacked(squadScore.owner, squadScore.points)
-        );
+        bytes32 leaf = keccak256(abi.encodePacked(squadScore.owner, squadScore.points));
         bytes32 computedHash = leaf;
 
         for (uint256 i = 0; i < proof.length; i++) {
             bytes32 proofElement = proof[i];
 
             if (computedHash < proofElement) {
-                computedHash = keccak256(
-                    abi.encodePacked(computedHash, proofElement)
-                );
+                computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
             } else {
-                computedHash = keccak256(
-                    abi.encodePacked(proofElement, computedHash)
-                );
+                computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
             }
         }
 

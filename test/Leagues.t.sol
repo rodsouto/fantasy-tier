@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "forge-std/Test.sol";
 import "../src/Leagues.sol";
@@ -87,11 +87,7 @@ contract LeagueTest is Test {
         proofs[1][0] = keccak256("mock proof for user2");
 
         // Mock the Merkle verification
-        vm.mockCall(
-            address(merkle),
-            abi.encodeWithSelector(merkle.verifySquadScore.selector),
-            abi.encode(true)
-        );
+        vm.mockCall(address(merkle), abi.encodeWithSelector(merkle.verifySquadScore.selector), abi.encode(true));
 
         squads.updateGameWeekScores(gameWeek, squadScores, proofs);
 

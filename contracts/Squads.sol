@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity 0.8.24;
 
 import "solmate/src/auth/Owned.sol";
 import "./Entities.sol";
@@ -28,7 +28,6 @@ contract Squads is Owned {
         uint256 freeTransfers;
         bool usedWildcard;
         uint256 captainId;
-        uint256 viceCaptainId;
         uint256 joinedGameWeek; // New field to track when the squad joined
     }
 
@@ -63,31 +62,19 @@ contract Squads is Owned {
     event PlayerRemoved(address indexed owner, uint256 playerId);
 
     /// @notice Emitted when a player transfer occurs
-    event PlayerTransferred(
-        address indexed owner,
-        uint256 playerOut,
-        uint256 playerIn
-    );
+    event PlayerTransferred(address indexed owner, uint256 playerOut, uint256 playerIn);
 
     /// @notice Emitted when a squad's lineup is set
     event LineupSet(address indexed owner);
 
     /// @notice Emitted when a squad's captain and vice-captain are set
-    event CaptainSet(
-        address indexed owner,
-        uint256 captainId,
-        uint256 viceCaptainId
-    );
+    event CaptainSet(address indexed owner, uint256 captainId);
 
     /// @notice Emitted when a wildcard is used
     event WildcardUsed(address indexed owner);
 
     /// @notice Emitted when a squad's points are updated
-    event SquadPointsUpdated(
-        address indexed owner,
-        uint256 gameWeek,
-        uint256 newTotalPoints
-    );
+    event SquadPointsUpdated(address indexed owner, uint256 gameWeek, uint256 newTotalPoints);
 
     /// @notice Reference to the Merkle contract
     Merkle public merkle;
@@ -110,10 +97,7 @@ contract Squads is Owned {
     /// @notice Creates a new squad for the specified owner
     /// @param owner The address of the squad owner
     /// @param currentGameWeek The current game week when the squad is created
-    function createSquad(
-        address owner,
-        uint256 currentGameWeek
-    ) external onlyOwner {
+    function createSquad(address owner, uint256 currentGameWeek) external onlyOwner {
         require(squads[owner].owner == address(0), "Squad already exists");
         squads[owner].owner = owner;
         squads[owner].budget = INITIAL_BUDGET;
@@ -121,7 +105,6 @@ contract Squads is Owned {
         squads[owner].freeTransfers = MAX_FREE_TRANSFERS;
         squads[owner].usedWildcard = false;
         squads[owner].captainId = 0;
-        squads[owner].viceCaptainId = 0;
         squads[owner].joinedGameWeek = currentGameWeek;
         // Note: We don't initialize the players array here, it will start empty
         squadOwners.push(owner);
@@ -144,18 +127,9 @@ contract Squads is Owned {
                 teamPlayerCount++;
             }
         }
-        require(
-            teamPlayerCount <= MAX_PLAYERS_PER_TEAM,
-            "Max players per team reached"
-        );
+        require(teamPlayerCount <= MAX_PLAYERS_PER_TEAM, "Max players per team reached");
 
-        squad.players.push(
-            SquadPlayer({
-                id: player.id,
-                teamId: player.teamId,
-                isStarter: false
-            })
-        );
+        squad.players.push(SquadPlayer({id: player.id, teamId: player.teamId, isStarter: false}));
         squad.budget -= player.price;
         emit PlayerAdded(msg.sender, playerId);
     }
@@ -230,28 +204,17 @@ contract Squads is Owned {
                     squad.players[j].isStarter = true;
                     found = true;
 
-                    Entities.Player memory player = entities.player(
-                        starterIds[i]
-                    );
-                    if (
-                        keccak256(abi.encodePacked(player.position)) ==
-                        keccak256(abi.encodePacked("Goalkeeper"))
-                    ) {
+                    Entities.Player memory player = entities.player(starterIds[i]);
+                    if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Goalkeeper"))) {
                         goalkeeperCount++;
-                    } else if (
-                        keccak256(abi.encodePacked(player.position)) ==
-                        keccak256(abi.encodePacked("Defender"))
-                    ) {
+                    } else if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Defender")))
+                    {
                         defenderCount++;
                     } else if (
-                        keccak256(abi.encodePacked(player.position)) ==
-                        keccak256(abi.encodePacked("Midfielder"))
+                        keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Midfielder"))
                     ) {
                         midfielderCount++;
-                    } else if (
-                        keccak256(abi.encodePacked(player.position)) ==
-                        keccak256(abi.encodePacked("Forward"))
-                    ) {
+                    } else if (keccak256(abi.encodePacked(player.position)) == keccak256(abi.encodePacked("Forward"))) {
                         forwardCount++;
                     }
 
@@ -271,42 +234,23 @@ contract Squads is Owned {
 
     /// @notice Sets the captain and vice-captain for the caller's squad
     /// @param captainId The ID of the player to set as captain
-    /// @param viceCaptainId The ID of the player to set as vice-captain
-    function setCaptain(uint256 captainId, uint256 viceCaptainId) external {
+    function setCaptain(uint256 captainId) external {
         Squad storage squad = squads[msg.sender];
         require(squad.owner != address(0), "Squad does not exist");
 
         bool captainFound = false;
-        bool viceCaptainFound = false;
 
         for (uint256 i = 0; i < squad.players.length; i++) {
-            if (
-                squad.players[i].id == captainId && squad.players[i].isStarter
-            ) {
+            if (squad.players[i].id == captainId && squad.players[i].isStarter) {
                 captainFound = true;
-            }
-            if (
-                squad.players[i].id == viceCaptainId &&
-                squad.players[i].isStarter
-            ) {
-                viceCaptainFound = true;
             }
         }
 
         require(captainFound, "Captain must be in the starting lineup");
-        require(
-            viceCaptainFound,
-            "Vice-captain must be in the starting lineup"
-        );
-        require(
-            captainId != viceCaptainId,
-            "Captain and vice-captain must be different players"
-        );
 
         squad.captainId = captainId;
-        squad.viceCaptainId = viceCaptainId;
 
-        emit CaptainSet(msg.sender, captainId, viceCaptainId);
+        emit CaptainSet(msg.sender, captainId);
     }
 
     /// @notice Resets transfers for all squads
@@ -315,9 +259,8 @@ contract Squads is Owned {
         for (uint256 i = 0; i < squadOwners.length; i++) {
             address squadOwner = squadOwners[i];
             Squad storage squad = squads[squadOwner];
-            squad.freeTransfers = squad.freeTransfers < MAX_FREE_TRANSFERS
-                ? squad.freeTransfers + 1
-                : MAX_FREE_TRANSFERS;
+            squad.freeTransfers =
+                squad.freeTransfers < MAX_FREE_TRANSFERS ? squad.freeTransfers + 1 : MAX_FREE_TRANSFERS;
         }
     }
 
@@ -338,18 +281,14 @@ contract Squads is Owned {
     /// @param gameWeek The game week number
     /// @param squadScores Array of SquadScore structs containing owner addresses and points
     /// @param proofs Array of Merkle proofs corresponding to each SquadScore
-    function updateGameWeekScores(
-        uint256 gameWeek,
-        Merkle.SquadScore[] memory squadScores,
-        bytes32[][] memory proofs
-    ) external onlyOwner {
+    function updateGameWeekScores(uint256 gameWeek, Merkle.SquadScore[] memory squadScores, bytes32[][] memory proofs)
+        external
+        onlyOwner
+    {
         require(squadScores.length == proofs.length, "Invalid input length");
 
         for (uint256 i = 0; i < squadScores.length; i++) {
-            require(
-                merkle.verifySquadScore(gameWeek, squadScores[i], proofs[i]),
-                "Invalid Merkle proof"
-            );
+            require(merkle.verifySquadScore(gameWeek, squadScores[i], proofs[i]), "Invalid Merkle proof");
 
             address squadOwner = squadScores[i].owner;
             uint256 newPoints = squadScores[i].points;
@@ -359,11 +298,7 @@ contract Squads is Owned {
                 squads[squadOwner].totalPoints += newPoints;
                 squadGameWeekPoints[squadOwner][gameWeek] = newPoints;
                 processedGameWeeks[squadOwner][gameWeek] = true;
-                emit SquadPointsUpdated(
-                    squadOwner,
-                    gameWeek,
-                    squads[squadOwner].totalPoints
-                );
+                emit SquadPointsUpdated(squadOwner, gameWeek, squads[squadOwner].totalPoints);
             }
         }
     }
@@ -372,10 +307,7 @@ contract Squads is Owned {
     /// @param squadOwner The address of the squad owner
     /// @param gameWeek The game week number
     /// @return The points scored by the squad in the specified game week
-    function getSquadGameWeekPoints(
-        address squadOwner,
-        uint256 gameWeek
-    ) external view returns (uint256) {
+    function getSquadGameWeekPoints(address squadOwner, uint256 gameWeek) external view returns (uint256) {
         return squadGameWeekPoints[squadOwner][gameWeek];
     }
 }
